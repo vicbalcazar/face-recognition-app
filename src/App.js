@@ -7,12 +7,8 @@ import SignIn from './Components/SignIn/SignIn';
 import Rank from './Components/Rank/Rank';
 import Register from './Components/Register/Register';
 import Particles from 'react-particles-js';
-import Clarifai from 'clarifai';
+//import Clarifai from 'clarifai';
 import './App.css';
-
-const app = new Clarifai.App({
-  apiKey: 'b73bd9e5acfa4706b630034c2e4425d0'
-});
 
 const particlesOptions = {
   particles: {
@@ -26,27 +22,28 @@ const particlesOptions = {
   }
 };
 
+const initState = {
+  input: '',
+  imageUrl: '',
+  box:{},
+  route: 'signin',
+  isSignedIn: false,
+  user: {
+    id: '',
+    name: '',
+    password: '',
+    email: '',
+    entries: 0,
+    joined: ''
+
+  }
+};
 
 class App extends Component {
   //define Constructor
   constructor() {
     super();
-    this.state = {
-      input: '',
-      imageUrl: '',
-      box:{},
-      route: 'signin',
-      isSignedIn: false,
-      user: {
-        id: '',
-        name: '',
-        password: '',
-        email: '',
-        entries: 0,
-        joined: ''
-
-      }
-    };
+    this.state = initState;
   }
 
   loadUser = (data) => {
@@ -78,7 +75,7 @@ class App extends Component {
   }  
 
   displayFaceBox = (box) => {
-    console.log(box);
+    //console.log(box);
     this.setState( {box: box } ) 
   }
 
@@ -89,10 +86,18 @@ class App extends Component {
   onBtnSubmit = () => {
     this.setState({imageUrl: this.state.input});
 
-    app.models
-        .predict(
-          Clarifai.FACE_DETECT_MODEL, 
-          this.state.input)
+    // app.models
+    //     .predict(
+    //       Clarifai.FACE_DETECT_MODEL, 
+    //       this.state.input)
+      fetch('http://localhost:5000/imageurl', {
+        method: 'post',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          input: this.state.input
+        })
+      })
+        .then(response => response.json())
         .then( (response) => {
                 // do something with response
                 if (response) {
@@ -107,6 +112,7 @@ class App extends Component {
                     .then(count => {
                       this.setState(Object.assign(this.state.user, {entries: count}));
                     })
+                    .catch(console.log)
                 }
                 this.displayFaceBox(this.calculateFaceLocation(response));
                 // console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
@@ -117,7 +123,7 @@ class App extends Component {
 
   onRouteChange = (route) => {
     if (route === 'signin') {
-      this.setState( {isSignedIn: false} );
+      this.setState( initState );
     } else if (route ==='home') {
       this.setState({isSignedIn: true});
     }
